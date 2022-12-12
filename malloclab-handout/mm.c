@@ -1,4 +1,4 @@
-/*
+nhfhn/*
  * mm-naive.c - The fastest, least memory-efficient malloc package.
  * 
  * In this naive approach, a block is allocated by simply incrementing
@@ -44,7 +44,7 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* 
+/*
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
@@ -52,7 +52,7 @@ int mm_init(void)
     return 0;
 }
 
-/* 
+/*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
  *     Always allocate a block whose size is a multiple of the alignment.
  */
