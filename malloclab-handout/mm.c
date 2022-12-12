@@ -71,8 +71,41 @@ team_t team = {
  */
 int mm_init(void)
 {
-    return 0;
+	/*
+	*implements the inititalization from the book
+	* get 4 words from memory system, creates a empty free list, then calls extend heap to create first free block
+	*/
+	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
+		return -1
+	PUT(heap_listp, 0);
+	PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1));
+	PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1));
+	PUT(heap_listp + (3*WSIZE), PACK(0, 1));
+	heap_listp += (2*WSIZE);
+
+	if (extend_heap(CHUNKSIZE/WSIZE) == NULL)
+		return -1;
+	return 0;
 }
+
+//extend heap function needed for previous init function
+static void *extend_heap(size_t words)
+{
+	char *bp;
+	size_t size;
+
+	size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
+	if ((long)(bp = mem_sbrk(size)) == -1)
+		return NULL;
+
+	PUT(HDRP(bp), PACK(size, 0));
+	PUT(FTRP(bp), PACK(size, 0));
+	PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
+
+	return coalesce(bp)
+}
+
+
 
 /*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
