@@ -1,4 +1,4 @@
-nhfhn/*
+/*
  * mm-naive.c - The fastest, least memory-efficient malloc package.
  *
  * In this naive approach, a block is allocated by simply incrementing
@@ -76,7 +76,7 @@ int mm_init(void)
 	* get 4 words from memory system, creates a empty free list, then calls extend heap to create first free block
 	*/
 	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
-		return -1
+		return -1;
 	PUT(heap_listp, 0);
 	PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1));
 	PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1));
@@ -102,7 +102,7 @@ static void *extend_heap(size_t words)
 	PUT(FTRP(bp), PACK(size, 0));
 	PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
 
-	return coalesce(bp)
+	return coalesce(bp);
 }
 
 
@@ -140,7 +140,7 @@ void *mm_malloc(size_t size)
 /*
  * mm_free - Freeing a block does nothing.
  */
-void mm_free(void *ptr)
+void mm_free(void *bp)
 {
 	size_t size = GET_SIZE(HDRP(bp));
 
