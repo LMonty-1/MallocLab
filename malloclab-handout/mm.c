@@ -66,6 +66,23 @@ team_t team = {
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
+//extend heap function needed for previous init function
+static void *extend_heap(size_t words)
+{
+	char *bp;
+	size_t size;
+
+	size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
+	if ((long)(bp = mem_sbrk(size)) == -1)
+		return NULL;
+
+	PUT(HDRP(bp), PACK(size, 0));
+	PUT(FTRP(bp), PACK(size, 0));
+	PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
+
+	return coalesce(bp);
+}
+
 /*
  * mm_init - initialize the malloc package.
  */
@@ -88,25 +105,6 @@ int mm_init(void)
 		return -1;
 	return 0;
 }
-
-//extend heap function needed for previous init function
-static void *extend_heap(size_t words)
-{
-	char *bp;
-	size_t size;
-
-	size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
-	if ((long)(bp = mem_sbrk(size)) == -1)
-		return NULL;
-
-	PUT(HDRP(bp), PACK(size, 0));
-	PUT(FTRP(bp), PACK(size, 0));
-	PUT(HDRP(NEXT_BLKP(bp)), PACK(0,1));
-
-	return coalesce(bp);
-}
-
-
 
 /*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
@@ -136,18 +134,6 @@ void *mm_malloc(size_t size)
 		return NULL;
 	place(bp, asize);
 	return bp;
-}
-
-/*
- * mm_free - Freeing a block does nothing.
- */
-void mm_free(void *bp)
-{
-	size_t size = GET_SIZE(HDRP(bp));
-
-	PUT(HDRP(bp), PACK(size, 0));
-	PUT(FTRP(bp), PACK(size, 0));
-	coalesce(bp);
 }
 
 //coalesce function from the book
@@ -181,6 +167,18 @@ static void *coalesce(void *bp)
 		bp = PREV_BLKP(bp);
 	}
 	return bp;
+}
+
+/*
+ * mm_free - Freeing a block does nothing.
+ */
+void mm_free(void *bp)
+{
+	size_t size = GET_SIZE(HDRP(bp));
+
+	PUT(HDRP(bp), PACK(size, 0));
+	PUT(FTRP(bp), PACK(size, 0));
+	coalesce(bp);
 }
 
 /*
