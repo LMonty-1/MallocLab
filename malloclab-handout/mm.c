@@ -234,7 +234,7 @@ void *mm_realloc(void *ptr, size_t size)
     newptr = mm_malloc(size);
     if (newptr == NULL)
       return NULL;
-    copySize = *(size_t *)((char *)oldptr - 4);
+    copySize = *(size_t *)((char *)oldptr - WSIZE);
     if (size < copySize)
       copySize = size;
     memcpy(newptr, oldptr, copySize);
