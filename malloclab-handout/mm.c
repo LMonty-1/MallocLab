@@ -101,7 +101,10 @@ static void *coalesce(void *bp)
 	return bp;
 }
 
-//extend heap function needed for previous init function
+/*
+ * extend_heap - extends the heap by a certain number of words using sbrk
+ *				 mark this new section of heap as a new free block and coalesce
+  */
 static void *extend_heap(size_t words)
 {
 	char *bp;
@@ -124,8 +127,9 @@ static void *extend_heap(size_t words)
 int mm_init(void)
 {
 	/*
-	*implements the inititalization from the book
-	* get 4 words from memory system, creates a empty free list, then calls extend heap to create first free block
+	* implements the inititalization from the book
+	* get 4 words from memory system, creates a empty free list, 
+	* then calls extend heap to create first free block
 	*/
 	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
 		return -1;
@@ -141,7 +145,7 @@ int mm_init(void)
 }
 
 /*
- * find_fit - finds the first free block which can accomidate the requested size
+ * find_fit - finds the first free block which can contain the requested size
  */
 static void *find_fit(size_t size) 
 {
@@ -156,7 +160,8 @@ static void *find_fit(size_t size)
 }
 
 /*
- * place - makes a new block marked as allocated and takes away from the related free block
+ * place - takes apart an existing free block, and replaces it with an equal
+ * 		   sized allocated block, or an allocated block + a free block.
  */
 static void place(void *bp, size_t size) 
 {
@@ -177,8 +182,7 @@ static void place(void *bp, size_t size)
 }
 
 /*
- * mm_malloc - Allocate a block by incrementing the brk pointer.
- *     Always allocate a block whose size is a multiple of the alignment.
+ * mm_malloc - Allocate a block by placing it into the first free space
  */
 void *mm_malloc(size_t size)
 {
@@ -207,7 +211,7 @@ void *mm_malloc(size_t size)
 }
 
 /*
- * mm_free - Freeing a block does nothing.
+ * mm_free - mark the headers as unallocated and coalesce
  */
 void mm_free(void *bp)
 {
@@ -230,7 +234,7 @@ void *mm_realloc(void *ptr, size_t size)
     newptr = mm_malloc(size);
     if (newptr == NULL)
       return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
+    copySize = *(size_t *)((char *)oldptr - 4);
     if (size < copySize)
       copySize = size;
     memcpy(newptr, oldptr, copySize);
