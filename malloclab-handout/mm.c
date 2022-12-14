@@ -140,7 +140,11 @@ int mm_init(void)
 	return 0;
 }
 
-static void *find_fit(size_t size) {
+/*
+ * find_fit - finds the first free block which can accomidate the requested size
+ */
+static void *find_fit(size_t size) 
+{
     void *bp;
 
     for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
@@ -149,6 +153,27 @@ static void *find_fit(size_t size) {
         }
     }
     return NULL;
+}
+
+/*
+ * place - makes a new block marked as allocated and takes away from the related free block
+ */
+static void place(void *bp, size_t size) 
+{
+    size_t csize = GET_SIZE(HDRP(bp));
+
+    if ((csize - size) >= (2*DSIZE)) {
+        PUT(HDRP(bp), PACK(size,1));
+        PUT(FTRP(bp), PACK(size,1));
+        bp = NEXT_BLKP(bp);
+        
+        PUT(HDRP(bp), PACK(csize - size,0));
+        PUT(FTRP(bp), PACK(csize - size,0));
+    }
+    else {
+        PUT(HDRP(bp), PACK(csize,1));
+        PUT(FTRP(bp), PACK(csize,1));
+    }
 }
 
 /*
