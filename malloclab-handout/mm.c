@@ -66,6 +66,8 @@ team_t team = {
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
+static void *heap_listp;
+
 //coalesce function from the book
 static void *coalesce(void *bp)
 {
@@ -125,8 +127,7 @@ int mm_init(void)
 	*implements the inititalization from the book
 	* get 4 words from memory system, creates a empty free list, then calls extend heap to create first free block
 	*/
-    void *heap_listp = mem_sbrk(4*WSIZE);
-	if (heap_listp == (void *)-1)
+	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
 		return -1;
 	PUT(heap_listp, 0);
 	PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1));
@@ -137,6 +138,17 @@ int mm_init(void)
 	if (extend_heap(CHUNKSIZE/WSIZE) == NULL)
 		return -1;
 	return 0;
+}
+
+static void *find_fit(size_t size) {
+    void *bp;
+
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (!GET_ALLOC(HDRP(bp)) && (size <= GET_SIZE(HDRP(bp)))) {
+            return bp;
+        }
+    }
+    return NULL;
 }
 
 /*
