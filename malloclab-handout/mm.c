@@ -75,7 +75,8 @@ int mm_init(void)
 	*implements the inititalization from the book
 	* get 4 words from memory system, creates a empty free list, then calls extend heap to create first free block
 	*/
-	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
+    void *heap_listp = mem_sbrk(4*WSIZE);
+	if (heap_listp == (void *)-1)
 		return -1;
 	PUT(heap_listp, 0);
 	PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1));
