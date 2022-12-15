@@ -24,7 +24,7 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "L team",
+    "L.1 team",
     /* First member's full name */
     "Logan Towne",
     /* First member's email address */
@@ -44,14 +44,18 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* ### extra functions from book ### */
+/* Helper functions from the book*/
 
+//word size
 #define WSIZE 4
+//double size
 #define DSIZE 8
 #define CHUNKSIZE (1<<12)
 
+//find the bigger of 2 inputs
 #define MAX(x, y) ((x) > (y)? (x) : (y))
 
+//or 2 inputs to pack
 #define PACK(size, alloc) ((size) | (alloc))
 
 #define GET(p) 		(*(unsigned int *)(p))
@@ -68,7 +72,9 @@ team_t team = {
 
 static void *heap_listp;
 
-//coalesce function from the book
+/*
+ * coalesce - combine two empty blocks of memory
+ */
 static void *coalesce(void *bp)
 {
 	size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
@@ -101,15 +107,18 @@ static void *coalesce(void *bp)
 	return bp;
 }
 
-//extend heap function needed for previous init function
+/*
+ * extend_heap - increases the heap size when called by size words
+ */
 static void *extend_heap(size_t words)
 {
 	char *bp;
 	size_t size;
 
 	size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
-	if ((long)(bp = mem_sbrk(size)) == -1)
+	if ((long)(bp = mem_sbrk(size)) == -1)	{
 		return NULL;
+	}
 
 	PUT(HDRP(bp), PACK(size, 0));
 	PUT(FTRP(bp), PACK(size, 0));
@@ -124,19 +133,20 @@ static void *extend_heap(size_t words)
 int mm_init(void)
 {
 	/*
-	*implements the inititalization from the book
 	* get 4 words from memory system, creates a empty free list, then calls extend heap to create first free block
 	*/
-	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
+	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1){
 		return -1;
+	}
 	PUT(heap_listp, 0);
 	PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1));
 	PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1));
 	PUT(heap_listp + (3*WSIZE), PACK(0, 1));
 	heap_listp += (2*WSIZE);
 
-	if (extend_heap(CHUNKSIZE/WSIZE) == NULL)
+	if (extend_heap(CHUNKSIZE/WSIZE) == NULL){
 		return -1;
+	}
 	return 0;
 }
 
@@ -166,19 +176,17 @@ static void place(void *bp, size_t size)
         PUT(HDRP(bp), PACK(size,1));
         PUT(FTRP(bp), PACK(size,1));
         bp = NEXT_BLKP(bp);
-        
+
         PUT(HDRP(bp), PACK(csize - size,0));
         PUT(FTRP(bp), PACK(csize - size,0));
-    }
-    else {
+    }    else {
         PUT(HDRP(bp), PACK(csize,1));
         PUT(FTRP(bp), PACK(csize,1));
     }
 }
 
 /*
- * mm_malloc - Allocate a block by incrementing the brk pointer.
- *     Always allocate a block whose size is a multiple of the alignment.
+ * mm_malloc - create a new block of memory of a certain size
  */
 void *mm_malloc(size_t size)
 {
@@ -186,13 +194,15 @@ void *mm_malloc(size_t size)
 	size_t extendsize;
 	char *bp;
 
-	if (size == 0)
+	if (size == 0){
 		return NULL;
+	}
 
-	if(size <= DSIZE)
+	if(size <= DSIZE) {
 		asize = 2*DSIZE;
-	else
+	} else {
 		asize = DSIZE * ((size + (DSIZE) + (DSIZE-1)) / DSIZE);
+	}
 
 	if ((bp = find_fit(asize)) != NULL) {
 		place(bp, asize);
@@ -200,14 +210,15 @@ void *mm_malloc(size_t size)
 	}
 
 	extendsize = MAX(asize,CHUNKSIZE);
-	if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
+	if ((bp = extend_heap(extendsize/WSIZE)) == NULL) {
 		return NULL;
+	}
 	place(bp, asize);
 	return bp;
 }
 
 /*
- * mm_free - Freeing a block does nothing.
+ * mm_free - Free a block of memory then call coalesce
  */
 void mm_free(void *bp)
 {
@@ -219,25 +230,26 @@ void mm_free(void *bp)
 }
 
 /*
- * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
+ * mm_realloc - take a pointer and a size, make a new pointer to the size then move the old pointer memory to the new memory
  */
 void *mm_realloc(void *ptr, size_t size)
 {
     void *oldptr = ptr;
     void *newptr;
     size_t copySize;
-    
+
     newptr = mm_malloc(size);
-    if (newptr == NULL)
-      return NULL;
+    if (newptr == NULL) {
+      	return NULL;
+    }
     copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
+    if (size < copySize) {
       copySize = size;
+	}
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
 }
-
 
 
 
